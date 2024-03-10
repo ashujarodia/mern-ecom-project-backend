@@ -1,17 +1,23 @@
+import { v2 as cloudinary } from 'cloudinary';
 import { Request } from 'express';
 import { rm } from 'fs';
 import { TryCatch } from '../middlewares/error.js';
 import { Product } from '../models/product.js';
 import { NewProductRequestBody } from '../types/types.js';
+import { uploadImageToCloudinary } from '../utils/cloudinary.js';
 import ErrorHandler from '../utils/utility-class.js';
 
 export const newProduct = TryCatch(async (req: Request<{}, {}, NewProductRequestBody>, res, next) => {
 	const { name, price, stock, category, description } = req.body;
+
 	const photo = req.file;
 
 	if (!photo) {
 		return next(new ErrorHandler('Please add photo', 400));
 	}
+
+	const localFilePath = `public/temp/${photo.filename}`;
+	const imgRes = await uploadImageToCloudinary(localFilePath);
 
 	if (!name || !price || !stock || !category || !description) {
 		rm(photo.path, () => {
@@ -19,11 +25,22 @@ export const newProduct = TryCatch(async (req: Request<{}, {}, NewProductRequest
 		});
 		return next(new ErrorHandler('Please fill all fields', 400));
 	}
-	await Product.create({ name, price, stock, category: category.toLowerCase(), photo: photo.path, description });
+	const product = await Product.create({
+		name,
+		price,
+		stock,
+		category: category.toLowerCase(),
+		photo: {
+			url: imgRes.url,
+			public_id: imgRes.public_id,
+		},
+		description,
+	});
 
 	return res.status(201).json({
 		success: true,
 		message: 'Product created successfully',
+		product,
 	});
 });
 
@@ -95,25 +112,16 @@ export const getSimilarProducts = TryCatch(async (req, res, next) => {
 
 export const updateProduct = TryCatch(async (req, res, next) => {
 	const { id } = req.params;
-	console.log('id : ' + id);
-	console.log(req.body);
 
 	const { name, price, stock, category, description, featured } = req.body;
-	console.log('name : ' + name);
-
 	const photo = req.file;
 
-	const product = await Product.findById(id);
-
+	let product = await Product.findById(id);
 	if (!product) {
 		return next(new ErrorHandler('Product not found', 404));
 	}
-	if (photo) {
-		rm(product.photo, () => {
-			console.log('Old photo deleted');
-		});
-		product.photo = photo.path;
-	}
+
+	// Update product fields
 	if (name) product.name = name;
 	if (price) product.price = price;
 	if (stock) product.stock = stock;
@@ -121,11 +129,26 @@ export const updateProduct = TryCatch(async (req, res, next) => {
 	if (description) product.description = description;
 	if (featured) product.featured = featured;
 
+	// If a new photo is uploaded, replace the old photo in Cloudinary
+	if (photo) {
+		// Delete the old image from Cloudinary
+		try {
+			await cloudinary.uploader.destroy(product.photo?.public_id!);
+		} catch (error) {
+			console.error('Error deleting old image from Cloudinary:', error);
+		}
+
+		const localFilePath = `public/temp/${photo.filename}`;
+		const imgRes = await uploadImageToCloudinary(localFilePath);
+		product.photo.url = imgRes.secure_url;
+		product.photo.public_id = imgRes.public_id;
+	}
+
 	await product.save();
 
-	return res.status(201).json({
+	return res.status(200).json({
 		success: true,
-		message: 'Product Updated Successfully',
+		message: 'Product updated successfully',
 		product,
 	});
 });
@@ -137,13 +160,20 @@ export const deleteProduct = TryCatch(async (req, res, next) => {
 	if (!product) {
 		return next(new ErrorHandler('Product not found', 404));
 	}
-	rm(product.photo, () => {
-		console.log('Photo deleted');
-	});
+
+	// Delete the image from Cloudinary
+	try {
+		await cloudinary.uploader.destroy(product.photo.public_id); // Assuming public_id is stored in the product schema
+	} catch (error) {
+		console.error('Error deleting image from Cloudinary:', error);
+		// Continue with deletion even if Cloudinary deletion fails
+	}
+
+	// Delete the product from the database
 	await product.deleteOne();
 
-	return res.status(201).json({
+	return res.status(200).json({
 		success: true,
-		message: 'Product deleted Successfully',
+		message: 'Product deleted successfully',
 	});
 });

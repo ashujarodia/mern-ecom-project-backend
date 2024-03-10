@@ -1,7 +1,8 @@
 import express from 'express';
+import { deleteProduct, getAllProducts, getFeaturedProducts, getLatestProducts, getPopularProducts, getProductDetails, getSimilarProducts, newProduct, updateProduct } from '../controllers/product.js';
 import { adminOnly } from '../middlewares/auth.js';
 import { singleUpload } from '../middlewares/multer.js';
-import { deleteProduct, getAllProducts, getFeaturedProducts, getLatestProducts, getPopularProducts, getProductDetails, getSimilarProducts, newProduct, updateProduct } from '../controllers/product.js';
+import { uploadImageToCloudinary } from '../utils/cloudinary.js';
 
 const app = express.Router();
 

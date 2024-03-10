@@ -1,5 +1,16 @@
 import mongoose from 'mongoose';
 
+const photoSchema = new mongoose.Schema({
+	public_id: {
+		type: String,
+		required: [true, 'Public id is required'],
+	},
+	url: {
+		type: String,
+		required: [true, 'Url is required'],
+	},
+});
+
 const schema = new mongoose.Schema(
 	{
 		name: {
@@ -7,8 +18,8 @@ const schema = new mongoose.Schema(
 			required: [true, 'Please enter name'],
 		},
 		photo: {
-			type: String,
-			required: [true, 'Please enter photo'],
+			type: photoSchema,
+			required: [true, 'Photo is required'],
 		},
 		price: {
 			type: Number,
