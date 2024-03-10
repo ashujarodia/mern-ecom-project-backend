@@ -17,6 +17,7 @@ export const newProduct = TryCatch(async (req: Request<{}, {}, NewProductRequest
 	}
 
 	const localFilePath = `public/temp/${photo.filename}`;
+
 	const imgRes = await uploadImageToCloudinary(localFilePath);
 
 	if (!name || !price || !stock || !category || !description) {
@@ -163,10 +164,9 @@ export const deleteProduct = TryCatch(async (req, res, next) => {
 
 	// Delete the image from Cloudinary
 	try {
-		await cloudinary.uploader.destroy(product.photo.public_id); // Assuming public_id is stored in the product schema
+		await cloudinary.uploader.destroy(product.photo.public_id);
 	} catch (error) {
 		console.error('Error deleting image from Cloudinary:', error);
-		// Continue with deletion even if Cloudinary deletion fails
 	}
 
 	// Delete the product from the database
