@@ -16,7 +16,7 @@ export const newProduct = TryCatch(async (req: Request<{}, {}, NewProductRequest
 		return next(new ErrorHandler('Please add photo', 400));
 	}
 
-	const localFilePath = `public/temp/${photo.filename}`;
+	const localFilePath = `temp/${photo.filename}`;
 
 	const imgRes = await uploadImageToCloudinary(localFilePath);
 
@@ -139,7 +139,7 @@ export const updateProduct = TryCatch(async (req, res, next) => {
 			console.error('Error deleting old image from Cloudinary:', error);
 		}
 
-		const localFilePath = `public/temp/${photo.filename}`;
+		const localFilePath = `temp/${photo.filename}`;
 		const imgRes = await uploadImageToCloudinary(localFilePath);
 		product.photo.url = imgRes.secure_url;
 		product.photo.public_id = imgRes.public_id;

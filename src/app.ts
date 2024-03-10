@@ -46,7 +46,7 @@ app.use('/api/v1/order', orderRoutes);
 app.use('/api/v1/payment', paymentRoutes);
 
 //using middlewares
-app.use('./uploads', express.static('uploads'));
+app.use('./temp', express.static('temp'));
 app.use(errroMiddleware);
 
 cloudinary.config({

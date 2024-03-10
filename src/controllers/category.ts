@@ -14,7 +14,7 @@ export const addNewCategory = TryCatch(async (req: Request<{}, {}, NewCategoryRe
 		return next(new ErrorHandler('Please add all fields', 400));
 	}
 
-	const localFilePath = `public/temp/${photo.filename}`;
+	const localFilePath = `temp/${photo.filename}`;
 
 	const imgRes = await uploadImageToCloudinary(localFilePath);
 
@@ -102,7 +102,7 @@ export const updateCategory = TryCatch(async (req: Request<any, {}, NewCategoryR
 			console.error('Error deleting old image from Cloudinary:', error);
 		}
 
-		const localFilePath = `public/temp/${photo.filename}`;
+		const localFilePath = `temp/${photo.filename}`;
 		const imgRes = await uploadImageToCloudinary(localFilePath);
 		category.photo.url = imgRes.secure_url;
 		category.photo.public_id = imgRes.public_id;
