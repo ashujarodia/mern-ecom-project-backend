@@ -51,7 +51,10 @@ export const allOrders = TryCatch(async (req, res, next) => {
 
 export const getOrderDetails = TryCatch(async (req, res, next) => {
 	const { orderId } = req.params;
-	const order = await Order.findById(orderId).populate('user', 'name');
+	const order = await Order.findById(orderId).populate('user').populate({
+		path: 'orderItems.product',
+		model: 'Product',
+	});
 	if (!order) {
 		return next(new ErrorHandler('Order not found', 404));
 	}
