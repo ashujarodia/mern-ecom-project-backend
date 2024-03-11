@@ -22,9 +22,7 @@ export const newOrder = TryCatch(async (req: Request<{}, {}, NewOrderRequestBody
 		shippingCharges,
 		total,
 	});
-
 	await reduceStock(orderItems);
-
 	return res.status(201).json({
 		success: true,
 		message: 'Order placed successfully',

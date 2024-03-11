@@ -19,6 +19,10 @@ export const addToCart = TryCatch(async (req: Request<{}, {}, NewCartItemRequest
 		return next(new ErrorHandler('Product not found', 404));
 	}
 
+	if (product.stock < 1) {
+		return next(new ErrorHandler('Out of stock', 400));
+	}
+
 	let cart = await Cart.findOne({ userId: _id }).populate('items.product');
 	if (!cart) {
 		cart = new Cart({
@@ -32,14 +36,14 @@ export const addToCart = TryCatch(async (req: Request<{}, {}, NewCartItemRequest
 	}
 
 	// Check if the product already exists in the cart
-	const existingItemIndex = cart.items.findIndex((item) => item.product.toString() === productId);
+	const existingItem = cart.items.find((item) => item.product._id.toString() === productId);
 
-	if (existingItemIndex !== -1) {
+	if (existingItem) {
 		// Update quantity if the product already exists in the cart
-		cart.items[existingItemIndex].quantity += quantity || 1;
+		existingItem.quantity += quantity || 1;
 	} else {
 		// Add new item to the cart
-		cart.items.push({ product: productId, quantity, price: product.price });
+		cart.items.push({ product: productId, quantity: quantity || 1, price: product.price });
 	}
 
 	// Save the cart

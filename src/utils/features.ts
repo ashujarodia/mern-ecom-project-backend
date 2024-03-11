@@ -2,16 +2,25 @@ import { Types } from 'mongoose';
 import { Cart } from '../models/cart.js';
 import { Product } from '../models/product.js';
 import { OrderItemType } from '../types/types.js';
+import ErrorHandler from './utility-class.js';
 
 export const reduceStock = async (orderItems: OrderItemType[]) => {
-	for (let i = 0; i < orderItems.length; i++) {
-		const order = orderItems[i];
-		const product = await Product.findById(order.product);
-		if (!product) {
-			throw new Error('Product not found');
+	try {
+		for (let i = 0; i < orderItems.length; i++) {
+			const order = orderItems[i];
+			const product = await Product.findById(order.product);
+			if (!product) {
+				throw new ErrorHandler('Product not found', 404);
+			}
+			// Ensure product stock is sufficient
+			if (product.stock < order.quantity) {
+				throw new ErrorHandler('Insufficient stock for product', 400);
+			}
+			product.stock -= order.quantity;
+			await product.save();
 		}
-		product.stock -= order.quantity;
-		await product.save();
+	} catch (error) {
+		throw error;
 	}
 };
 
